@@ -439,6 +439,329 @@ server.tool(
   },
 );
 
+// Create issue tool - 新規追加！
+server.tool(
+  "create_issue",
+  "Create a new issue in a GitHub repository",
+  {
+    owner: z.string().describe("Repository owner"),
+    repo: z.string().describe("Repository name"),
+    title: z.string().describe("Issue title"),
+    body: z.string().describe("Issue body/description"),
+    assignees: z.array(z.string()).optional().describe("Array of usernames to assign"),
+    labels: z.array(z.string()).optional().describe("Array of label names"),
+    milestone: z.number().optional().describe("Milestone number")
+  },
+  async ({ owner, repo, title, body, assignees, labels, milestone }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      const createUrl = `${GITHUB_API_URL}/repos/${owner}/${repo}/issues`;
+      const requestBody: any = {
+        title,
+        body
+      };
+      
+      if (assignees) requestBody.assignees = assignees;
+      if (labels) requestBody.labels = labels;
+      if (milestone) requestBody.milestone = milestone;
+
+      const response = await fetch(createUrl, {
+        method: "POST",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${githubToken}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to create issue: ${response.status} - ${errorText}`,
+        );
+      }
+
+      const result:any = await response.json();
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              id: result.id,
+              number: result.number,
+              title: result.title,
+              state: result.state,
+              html_url: result.html_url,
+              created_at: result.created_at
+            }, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        error: errorMessage,
+        isError: true,
+      };
+    }
+  },
+);
+
+// Update issue comment tool - 新規追加！
+server.tool(
+  "update_issue_comment",
+  "Update a GitHub issue comment",
+  {
+    owner: z.string().describe("Repository owner"),
+    repo: z.string().describe("Repository name"),
+    commentId: z.string().describe("Comment ID to update"),
+    body: z.string().describe("New comment body"),
+  },
+  async ({ owner, repo, commentId, body }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      const updateUrl = `${GITHUB_API_URL}/repos/${owner}/${repo}/issues/comments/${commentId}`;
+      const response = await fetch(updateUrl, {
+        method: "PATCH",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${githubToken}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ body }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to update comment: ${response.status} - ${errorText}`,
+        );
+      }
+
+      const result = await response.json();
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Comment ${commentId} updated successfully`,
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        error: errorMessage,
+        isError: true,
+      };
+    }
+  },
+);
+
+// Create pull request tool - 新規追加！
+server.tool(
+  "create_pull_request",
+  "Create a new pull request in a GitHub repository",
+  {
+    owner: z.string().describe("Repository owner"),
+    repo: z.string().describe("Repository name"),
+    title: z.string().describe("Pull request title"),
+    body: z.string().describe("Pull request body/description"),
+    head: z.string().describe("The name of the branch where your changes are implemented"),
+    base: z.string().describe("The name of the branch you want the changes pulled into"),
+    draft: z.boolean().optional().describe("Whether to create the pull request as a draft"),
+    maintainer_can_modify: z.boolean().optional().describe("Whether maintainers can modify the pull request")
+  },
+  async ({ owner, repo, title, body, head, base, draft, maintainer_can_modify }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      const createUrl = `${GITHUB_API_URL}/repos/${owner}/${repo}/pulls`;
+      const requestBody: any = {
+        title,
+        body,
+        head,
+        base
+      };
+      
+      if (draft !== undefined) requestBody.draft = draft;
+      if (maintainer_can_modify !== undefined) requestBody.maintainer_can_modify = maintainer_can_modify;
+
+      const response = await fetch(createUrl, {
+        method: "POST",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${githubToken}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to create pull request: ${response.status} - ${errorText}`,
+        );
+      }
+
+      const result:any = await response.json();
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              id: result.id,
+              number: result.number,
+              title: result.title,
+              state: result.state,
+              html_url: result.html_url,
+              head: result.head.ref,
+              base: result.base.ref,
+              created_at: result.created_at
+            }, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        error: errorMessage,
+        isError: true,
+      };
+    }
+  },
+);
+
+// List issues tool - 新規追加！
+server.tool(
+  "list_issues",
+  "List issues in a GitHub repository",
+  {
+    owner: z.string().describe("Repository owner"),
+    repo: z.string().describe("Repository name"),
+    state: z.enum(["open", "closed", "all"]).optional().describe("Issue state filter"),
+    labels: z.string().optional().describe("Comma-separated list of label names"),
+    assignee: z.string().optional().describe("Filter by assignee username"),
+    creator: z.string().optional().describe("Filter by creator username"),
+    sort: z.enum(["created", "updated", "comments"]).optional().describe("Sort order"),
+    direction: z.enum(["asc", "desc"]).optional().describe("Sort direction"),
+    per_page: z.number().optional().describe("Number of results per page (max 100)"),
+    page: z.number().optional().describe("Page number")
+  },
+  async ({ owner, repo, state, labels, assignee, creator, sort, direction, per_page, page }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (state) params.append("state", state);
+      if (labels) params.append("labels", labels);
+      if (assignee) params.append("assignee", assignee);
+      if (creator) params.append("creator", creator);
+      if (sort) params.append("sort", sort);
+      if (direction) params.append("direction", direction);
+      if (per_page) params.append("per_page", per_page.toString());
+      if (page) params.append("page", page.toString());
+
+      const listUrl = `${GITHUB_API_URL}/repos/${owner}/${repo}/issues?${params.toString()}`;
+      const response = await fetch(listUrl, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${githubToken}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to list issues: ${response.status} - ${errorText}`,
+        );
+      }
+
+      const issues:any = await response.json();
+      
+      // Simplify the response
+      const simplifiedIssues = issues.map((issue: any) => ({
+        id: issue.id,
+        number: issue.number,
+        title: issue.title,
+        state: issue.state,
+        html_url: issue.html_url,
+        user: issue.user.login,
+        labels: issue.labels.map((label: any) => label.name),
+        assignees: issue.assignees.map((assignee: any) => assignee.login),
+        created_at: issue.created_at,
+        updated_at: issue.updated_at,
+        comments: issue.comments
+      }));
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(simplifiedIssues, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        error: errorMessage,
+        isError: true,
+      };
+    }
+  },
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

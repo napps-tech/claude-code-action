@@ -37,4 +37,4 @@ jobs:
             - Overall architecture and design decisions
 
             Be constructive and specific in your feedback. Give inline comments where applicable.
-          allowed_tools: "mcp__github__add_pull_request_review_comment"
+          allowed_tools: "mcp__github_file_ops__add_pull_request_review_comment"

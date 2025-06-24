@@ -43,10 +43,10 @@ export function buildAllowedToolsString(
   // Add the appropriate comment tool based on event type
   if (eventData.eventName === "pull_request_review_comment") {
     // For inline PR review comments, only use PR comment tool
-    baseTools.push("mcp__github__update_pull_request_comment");
+    baseTools.push("mcp__github_file_ops__update_pull_request_comment");
   } else {
     // For all other events (issue comments, PR reviews, issues), use issue comment tool
-    baseTools.push("mcp__github__update_issue_comment");
+    baseTools.push("mcp__github_file_ops__update_issue_comment");
   }
 
   let allAllowedTools = baseTools.join(",");
@@ -433,9 +433,9 @@ ${stripHtmlComments(context.directPrompt)}
 ${
   eventData.eventName === "pull_request_review_comment"
     ? `<comment_tool_info>
-IMPORTANT: For this inline PR review comment, you have been provided with ONLY the mcp__github__update_pull_request_comment tool to update this specific review comment.
+IMPORTANT: For this inline PR review comment, you have been provided with ONLY the mcp__github_file_ops__update_pull_request_comment tool to update this specific review comment.
 
-Tool usage example for mcp__github__update_pull_request_comment:
+Tool usage example for mcp__github_file_ops__update_pull_request_comment:
 {
   "owner": "${context.repository.split("/")[0]}",
   "repo": "${context.repository.split("/")[1]}",
@@ -445,9 +445,9 @@ Tool usage example for mcp__github__update_pull_request_comment:
 All four parameters (owner, repo, commentId, body) are required.
 </comment_tool_info>`
     : `<comment_tool_info>
-IMPORTANT: For this event type, you have been provided with ONLY the mcp__github__update_issue_comment tool to update comments.
+IMPORTANT: For this event type, you have been provided with ONLY the mcp__github_file_ops__update_issue_comment tool to update comments.
 
-Tool usage example for mcp__github__update_issue_comment:
+Tool usage example for mcp__github_file_ops__update_issue_comment:
 {
   "owner": "${context.repository.split("/")[0]}",
   "repo": "${context.repository.split("/")[1]}",
@@ -470,7 +470,7 @@ Follow these steps:
 1. Create a Todo List:
    - Use your GitHub comment to maintain a detailed task list based on the request.
    - Format todos as a checklist (- [ ] for incomplete, - [x] for complete).
-   - Update the comment using ${eventData.eventName === "pull_request_review_comment" ? "mcp__github__update_pull_request_comment" : "mcp__github__update_issue_comment"} with each task completion.
+   - Update the comment using ${eventData.eventName === "pull_request_review_comment" ? "mcp__github_file_ops__update_pull_request_comment" : "mcp__github_file_ops__update_issue_comment"} with each task completion.
 
 2. Gather Context:
    - Analyze the pre-fetched data provided above.
@@ -500,7 +500,7 @@ ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was prov
         - Look for bugs, security issues, performance problems, and other issues
         - Suggest improvements for readability and maintainability
         - Check for best practices and coding standards
-        - Reference specific code sections with file paths and line numbers${eventData.isPR ? "\n      - AFTER reading files and analyzing code, you MUST call mcp__github__update_issue_comment to post your review" : ""}
+        - Reference specific code sections with file paths and line numbers${eventData.isPR ? "\n      - AFTER reading files and analyzing code, you MUST call mcp__github_file_ops__update_issue_comment to post your review" : ""}
       - Formulate a concise, technical, and helpful response based on the context.
       - Reference specific code with inline formatting or code blocks.
       - Include relevant file paths and line numbers when applicable.
@@ -559,12 +559,12 @@ ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was prov
 
 Important Notes:
 - All communication must happen through GitHub PR comments.
-- Never create new comments. Only update the existing comment using ${eventData.eventName === "pull_request_review_comment" ? "mcp__github__update_pull_request_comment" : "mcp__github__update_issue_comment"} with comment_id: ${context.claudeCommentId}.
-- This includes ALL responses: code reviews, answers to questions, progress updates, and final results.${eventData.isPR ? "\n- PR CRITICAL: After reading files and forming your response, you MUST post it by calling mcp__github__update_issue_comment. Do NOT just respond with a normal response, the user will not see it." : ""}
+- Never create new comments. Only update the existing comment using ${eventData.eventName === "pull_request_review_comment" ? "mcp__github_file_ops__update_pull_request_comment" : "mcp__github_file_ops__update_issue_comment"} with comment_id: ${context.claudeCommentId}.
+- This includes ALL responses: code reviews, answers to questions, progress updates, and final results.${eventData.isPR ? "\n- PR CRITICAL: After reading files and forming your response, you MUST post it by calling mcp__github_file_ops__update_issue_comment. Do NOT just respond with a normal response, the user will not see it." : ""}
 - You communicate exclusively by editing your single comment - not through any other means.
 - Use this spinner HTML when work is in progress: <img src="https://github.com/user-attachments/assets/5ac382c7-e004-429b-8e35-7feb3e8f9c6f" width="14px" height="14px" style="vertical-align: middle; margin-left: 4px;" />
 ${eventData.isPR && !eventData.claudeBranch ? `- Always push to the existing branch when triggered on a PR.` : `- IMPORTANT: You are already on the correct branch (${eventData.claudeBranch || "the created branch"}). Never create new branches when triggered on issues or closed/merged PRs.`}
-- Use mcp__github_file_ops__commit_files for making commits (works for both new and existing files, single or multiple). Use mcp__github_file_ops__delete_files for deleting files (supports deleting single or multiple files atomically), or mcp__github__delete_file for deleting a single file. Edit files locally, and the tool will read the content from the same path on disk.
+- Use mcp__github_file_ops__commit_files for making commits (works for both new and existing files, single or multiple). Use mcp__github_file_ops__delete_files for deleting files (supports deleting single or multiple files atomically), or mcp__github_file_ops__delete_file for deleting a single file. Edit files locally, and the tool will read the content from the same path on disk.
   Tool usage examples:
   - mcp__github_file_ops__commit_files: {"files": ["path/to/file1.js", "path/to/file2.py"], "message": "feat: add new feature"}
   - mcp__github_file_ops__delete_files: {"files": ["path/to/old.js"], "message": "chore: remove deprecated file"}

@@ -9,20 +9,8 @@ export async function prepareMcpConfig(
   try {
     const mcpConfig = {
       mcpServers: {
-        github: {
-          command: "docker",
-          args: [
-            "run",
-            "-i",
-            "--rm",
-            "-e",
-            "GITHUB_PERSONAL_ACCESS_TOKEN",
-            "ghcr.io/anthropics/github-mcp-server:sha-7382253",
-          ],
-          env: {
-            GITHUB_PERSONAL_ACCESS_TOKEN: githubToken,
-          },
-        },
+        // githubサーバーは削除（Dockerが必要なため）
+        // 代わりにgithub_file_opsですべての機能を提供
         github_file_ops: {
           command: "bun",
           args: [
